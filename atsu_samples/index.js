@@ -1,5 +1,6 @@
-import * as camutil from "./camera/camUtils.js";
+import * as camSwitcher from "./camera/camSwitcher.js";
 window.addEventListener('load', init);
+
 
 function init(){
 	const width = 1280;
@@ -14,7 +15,15 @@ function init(){
 
 
 	//////// camera
-	const camera = camutil.rot_cam(new THREE.Vector3(80, 20, 0), new THREE.Vector3(0,0,0));
+	const swt = new camSwitcher.CamSwitcher();
+	let camera = swt.now_cam();
+
+	/* カメラ切り替えテスト */
+	window.addEventListener('click', cam_switch);
+	function cam_switch(){
+		swt.switch_cam();
+	}
+
 
 	//////// scene
 	const testscene = MakeTestScene();
@@ -24,6 +33,7 @@ function init(){
 
 	//////// Update every frame
 	function Update(){
+		camera = swt.now_cam();
 		renderer.render(testscene, camera);
 
 		requestAnimationFrame(Update);
