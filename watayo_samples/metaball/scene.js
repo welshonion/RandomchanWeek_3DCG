@@ -1,7 +1,7 @@
 let camera;
 let scene;
 let renderer;
-
+let marchingCubes;
 function init() {
     // init stats
     let stats = initStats();
@@ -9,19 +9,96 @@ function init() {
     // sceneオブジェクト->コンテナオブジェクト　これに格納しないと何も描画されない
     scene = new THREE.Scene();
     // percpective Camera
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 10000);
+    // camera setting
+    camera.position.x = 0;
+    camera.position.y = 15;
+    camera.position.z = 25;
+
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     // renderer カメラオブジェクトからシーンがどのように見えるのか計算する.
     renderer = new THREE.WebGLRenderer();
     renderer.setClearColor(new THREE.Color(0x000));
     renderer.setSize(window.innerWidth, window.innerHeight);
     // 影を有効にする objectに対して影を落とす物体か落とされる物体か明示する必要がある
-    renderer.shadowMap.enabled = true;
+    // renderer.shadowMap.enabled = true;
+
+    // 軸を表示する
+    let axes = new THREE.AxisHelper(20);
+    scene.add(axes);
 
     // MetaBoll
+    let metaMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffffff
+    });
+    
+    const resolution = 48;
+    marchingCubes = new THREE.MarchingCubes(resolution, metaMaterial, true, true);
+    marchingCubes.position.set(0, 0, 0);
+    marchingCubes.scale.set(10, 10, 10);
+    
+    scene.add(marchingCubes);
 
+    // update metaball
+    function updateCubes (marchingCubes, time) {
+        // reset metaball
+        marchingCubes.reset();
+
+        let subtract = 18;
+        let strength = 0.5;
+
+        let ballx, bally, ballz;
+
+        for (let i = 0; i < 30; i++) {
+            ballx = Math.sin(i + 1.26 * time * (1.03 + 0.5 * Math.cos(0.21 * i))) * 0.27 + 0.5;
+            bally = Math.cos(i + 1.12 * time * Math.cos(1.22 + 0.1424 * i)) * 0.27 + 0.5;
+            ballz = Math.cos(i + 1.32 * time * 0.1 * Math.sin((0.92 + 0.53 * i))) * 0.27 + 0.5;
+            marchingCubes.addBall(ballx, bally, ballz, strength, subtract);
+        }
+	}
+	
+	// setGUI
+    let controls = new function() {
+        this.hue = 1.0;
+		this.saturation = 1.0;
+		this.lightness = 1.0;
+		
+    }
+
+    let gui = new dat.GUI();
+    let h = gui.addFolder("pointLight");
+    h.add(controls, 'hue', 0, 1.0, 0.25);
+    h.add(controls, 'saturation', 0.0, 1.0, 0.25);
+    h.add(controls, 'lightness', 0.0, 1.0, 0.25);
+
+    // set spotLight
+	let pointLight = new THREE.PointLight( 0xff3300);
+	let lightPos = new THREE.Vector3(30, 30, 30);
+    pointLight.position.set(lightPos.x, lightPos.y, lightPos.z);
+    pointLight.castShadow = true;
+	scene.add(pointLight);
+	
+	// point light helper
+	let sphereSize = 1;
+	let pointLightHelper = new THREE.PointLightHelper(pointLight, sphereSize);
+	scene.add(pointLightHelper);
+
+    let light = new THREE.DirectionalLight( 0xffffff );
+	light.position.set( 0, 0, 1 );
+    scene.add( light );
+    
+    let light2 = new THREE.DirectionalLight(0x00bfff);
+    light2.position.set(0, 0, -1);
+    scene.add(light2);
+    
     // add dom
     document.getElementById("WebGL-output").appendChild(renderer.domElement);
+
+    //render setup
+    let orbitControls = new THREE.OrbitControls(camera);
+    orbitControls.autoRotate = false;
+    let clock = new THREE.Clock();
 
     // call the render function
     render();
@@ -32,11 +109,19 @@ function init() {
         //sphere.rotation.y=step+=0.01;
         let delta = clock.getDelta();
         orbitControls.update(delta);
+        let time = clock.elapsedTime;
+
+		updateCubes(marchingCubes, time);
+		
+		lightPos.x = 20 * Math.cos(time);
+		lightPos.y = 20 * Math.sin(time * 0.4);
+		lightPos.z = 20 * Math.cos(time * 0.5);
+		pointLight.position.set(lightPos.x, lightPos.y, lightPos.z);
+		pointLight.color.setHSL(controls.hue, controls.saturation, controls.lightness);
 
         // render using requestAnimationFrame
         requestAnimationFrame(render);
-        // webGLRenderer.render(scene, camera);
-        composer.render(delta);
+        renderer.render(scene, camera);
     }
 
     function initStats() {
