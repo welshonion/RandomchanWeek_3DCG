@@ -1,4 +1,4 @@
-import { lavaVert, lavaFrag, lineFrag, wave } from '../myLibs/shaders/shader.js';
+import { basicVert, basicFrag, lineFrag } from '../myLibs/shaders/shader.js';
 
 let camera;
 let scene;
@@ -85,7 +85,8 @@ function init() {
 
 
     // Blobs
-    uniform.resolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
+    uniform.resolution.value.x = window.innerWidth;
+    uniform.resolution.value.y = window.innerHeight;
     uniform.dirLightPos.value = light.position;
     uniform.dirLightColor.value = light.color;
     uniform.pointLightPos.value = pointLight.position;
@@ -93,8 +94,8 @@ function init() {
 
     let material = new THREE.ShaderMaterial({
         uniforms: uniform,
-        vertexShader: lavaVert,
-        fragmentShader: wave,
+        vertexShader: basicVert,
+        fragmentShader: lineFrag,
     });
 
     const resolution = 48;
