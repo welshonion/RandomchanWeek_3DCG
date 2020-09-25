@@ -1,4 +1,4 @@
-import { lavaVert, lavaFrag, lineFrag, wave } from '../myLibs/shaders/shader.js';
+import { basicVert, basicFrag, lineFrag } from '../myLibs/shaders/shader.js';
 
 let camera;
 let scene;
@@ -93,8 +93,8 @@ function init() {
 
     let material = new THREE.ShaderMaterial({
         uniforms: uniform,
-        vertexShader: lavaVert,
-        fragmentShader: wave,
+        vertexShader: basicVert,
+        fragmentShader: lineFrag,
     });
 
     const resolution = 48;
