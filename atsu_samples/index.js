@@ -1,9 +1,14 @@
 import * as camSwitcher from "./camera/camSwitcher.js";
 import * as camUtils from "./camera/camUtils.js";
-import {FBXLoader} from "./three.js-master/examples/jsm/loaders/FBXLoader.js";
-import {GLTFLoader} from "./three.js-master/examples/jsm/loaders/GLTFLoader.js";
+import * as model_import from "./model_import.js";
 window.addEventListener('load', init);
 
+const cameras = [
+	camUtils.point_cam(new THREE.Vector3(0, 40, 100), new THREE.Vector3(0, 40, 0)),
+	camUtils.rot_cam(new THREE.Vector3(0, 40, 100), new THREE.Vector3(0, 10, 0), 1.5),
+	camUtils.shake_cam(new THREE.Vector3(40, 0, 60), new THREE.Vector3(200, 0, 0), 3.0, 5.0),
+	camUtils.point_cam(new THREE.Vector3(-100, 40, -20), new THREE.Vector3(0, 0, 0)),
+]
 
 function init(){
 	const width = 1280;
@@ -18,8 +23,9 @@ function init(){
 
 
 	//////// camera
-	const swt = new camSwitcher.CamSwitcher();
+	const swt = new camSwitcher.CamSwitcher(cameras);
 	let camera = swt.now_cam();
+	console.log(camera);
 
 	/* カメラ切り替えテスト */
 	window.addEventListener('click', cam_switch);
@@ -33,72 +39,72 @@ function init(){
 
 	//////// FBXLoad
 	const steel_frame = "./models/steel_frame.fbx";
-	initFBX(steel_frame, new THREE.Vector3(0.02,0,0), new THREE.Vector3(0,0,0), new THREE.Vector3(0.06, 0.06, 0.06));
+	model_import.addFBX(steel_frame, new THREE.Vector3(0.02,0,0), new THREE.Vector3(0,0,0), new THREE.Vector3(0.06, 0.06, 0.06), testscene);
 
-	function initFBX(File, pos, rot, sca){
-		const loader = new FBXLoader();
-		loader.load(File, (fbx) => {
-			fbx.traverse((child) => {
-				if(child.isMesh){
-					child.castShadow = true;
-					child.recieveShadow = true;
-				}
-			});
+	/* 追従テスト */
+	const sphere = new THREE.SphereGeometry(5,32,32);
+	const red = new THREE.MeshPhongMaterial({
+		color:0xff0000
+	});
+	const x = new THREE.Mesh(sphere, red);
+	let t = 0.0;
+	x.position.set(10, 0, 0);
+	testscene.add(x);
 
-			fbx.position.set(pos.x, pos.y, pos.z);
-			console.log(fbx.position);
-			fbx.rotation.set(rot.x, rot.y, rot.z);
-			fbx.scale.set(sca.x, sca.y, sca.z);
-
-			testscene.add(fbx);
-
-			camera = new camUtils.target_cam(new THREE.Vector3(40, 50, 30), fbx, new THREE.Vector3(0, 30, 0));
-
-			let t = 0.0;
-			Update();
-			function Update(){
-				requestAnimationFrame(Update);
-				fbx.position.add(new THREE.Vector3(0.0, Math.sin(t), 0.0));
-
-				t += 0.5;
-			}
-
-		});
-	}
-	function initGLTF(File, pos, rot, sca){
-		const loader = new GLTFLoader();
-		loader.load(File, (gltf) => {
-			let model = gltf.scene;
-
-			model.position.set(pos.x, pos.y, pos.z);
-			model.rotation.set(rot.x, rot.y, rot.z);
-			model.scale.set(sca.x, sca.y, sca.z);
-
-			testscene.add(model);
-		});
-	}
-
-
+	//////// Backscreen
+	const back_cam = new camUtils.target_cam(new THREE.Vector3(40, 30, 50), x);
+	const screen = backscreen(width, height, 0.1, testscene, back_cam);
+	screen.position.set(0, 30, 0);
+	testscene.add(screen);
 
 	//////// renderer
-	//const ef =  new THREE.EffectComposer(renderer);
-	renderer.render(testscene, camera);
 	Update();
 
 	//////// Update every frame
 	function Update(){
-//		camera = swt.now_cam();
+		camera = swt.now_cam();
 		renderer.render(testscene, camera);
 
 		requestAnimationFrame(Update);
+
+		/* 追従テスト */
+		x.position.add(new THREE.Vector3(0.1 * Math.sin(t), 0.1 * Math.cos(t), 0.0));
+		t += 0.01;
 	}
 	return;
 }
 
+function backscreen(width, height, scale, scene, camera){
+	//// カメラからの映像を映すスクリーンを返す
+	const canvas = document.createElement('canvas');
+	const renderer = new THREE.WebGLRenderer({
+		canvas:canvas
+	});
+	renderer.setSize(width, height);
+	renderer.setPixelRatio(window.devicePixelRatio);
 
+
+	const geometry = new THREE.PlaneGeometry(width * scale, height * scale);
+	const texture = new THREE.Texture(canvas);
+	const material = new THREE.MeshBasicMaterial({
+		map:texture
+	});
+	const screen = new THREE.Mesh(geometry, material);
+	screen.material.map.needsUpdate = true;
+
+	Update();
+	function Update(){
+		renderer.render(scene, camera);
+		screen.material.map.needsUpdate = true;
+
+		requestAnimationFrame(Update);
+	}
+	return screen;
+}
 
 
 function MakeTestScene(){
+	//// 各Helper付きのテストシーンを返す
 	const red = new THREE.MeshPhongMaterial({
 		color:0xff0000
 	});
