@@ -1,0 +1,12 @@
+[Info]
+Version = 3
+
+[Object]
+Pmd1 = C:\Users\welsh\works\MMD\本体\KizunaAI_ver1.01\KizunaAI_ver1.01\KizunaAI_ver1.01\kizunaai\kizunaai.pmx
+Pmd2 = C:\Users\welsh\works\MMD\背景\ステージ_湾岸桜ST42\ステージ_湾岸桜ST42\Stage_ST42\ST42.pmx
+
+[Effect]
+Default = none
+Pmd1 = none
+Pmd2 = none
+
