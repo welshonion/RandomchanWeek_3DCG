@@ -1,6 +1,7 @@
 import { OrbitControls } from "./libs/examples/jsm/controls/OrbitControls.js";
 import { MMDLoader } from "./libs/examples/jsm/loaders/MMDLoader.js";
 import { MMDAnimationHelper } from "./libs/examples/jsm/animation/MMDAnimationHelper.js";
+import { FBXLoader } from "./libs/examples/jsm/loaders/FBXLoader.js";
 
 window.addEventListener('load',init);
 
@@ -50,7 +51,7 @@ function init(){
     //scene.add(meshSphere);
 
     
-
+    const stagePath = 'stage.fbx';
     //const modelPath = 'kizunaai/kizunaai.pmx';
     const modelPath = 'randomchan82/random-chan82.pmx';
     const motionPath = 'Addiction/[A]ddiction_Lat式.vmd';
@@ -61,6 +62,8 @@ function init(){
 
     let mmdLoader = new MMDLoader();
     let mmdHelper = new MMDAnimationHelper();
+
+    let fbxLoader = new FBXLoader();
 
     let randomchanMesh;
     let randomchanMotion;
@@ -81,7 +84,11 @@ function init(){
     //Light
     const directionalLight = new THREE.DirectionalLight(0xFFFFFF);
     directionalLight.position.set(1,1,1);
-    scene.add(directionalLight);
+    //scene.add(directionalLight);
+
+    const ambientLight = new THREE.DirectionalLight(0xFFFFFF);
+    ambientLight.position.set(1,1,100);
+    scene.add(ambientLight);
 
     document.addEventListener('moucemove',event=>{
         mouseX=event.pageX;
@@ -94,6 +101,15 @@ function init(){
     //window.addEventListener('resize',onResize);
 
     function load(){
+        /***** ステージロード *****/
+        fbxLoader.load(
+            stagePath,
+            function(object){
+                scene.add(object);
+            },
+            onProgress,
+            onError
+        );
         
 
         /*****らんだむちゃんロード*****/
@@ -141,7 +157,7 @@ function init(){
                                     },
                                     onProgress,
                                     onError
-                                )
+                                );
                             },
                             onProgress,
                             onError
@@ -149,11 +165,11 @@ function init(){
                     },
                     onProgress,
                     onError
-                )
+                );
             },
             onProgress,
             onError
-        )
+        );
     }
 
     function play(){
