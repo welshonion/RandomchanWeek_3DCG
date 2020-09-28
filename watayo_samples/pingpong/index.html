@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>GPGPU Life Game</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+    </head>
+    <body>
+    <script id="shaderLifeGame" type="x-shader/x-fragment">
+      // "uniform vec2 resolution" is automatically added by GPUComputationRenderer as texture size
+      uniform vec2 planeSize;
+      #define delta (1.0 / 60.0)
+      vec2 textureSize = resolution;
+      
+      float feed = 0.017;
+      float kill = 0.078;
+
+      bool isInPosCoordRange(in vec2 texCoord) {
+        float v = texCoord.x + texCoord.y * textureSize.x;
+        return v <= (planeSize.x * planeSize.y);
+      }
+
+      float div(in float a, in float b) {
+        return floor(a / b);
+      }
+
+      float modulo(in float a, in float b) {
+        return a - floor(a / b) * b;
+      }
+
+      vec2 convertFromTexCoordToPosCoord(in vec2 texCoord) {
+        float idx = texCoord.x + texCoord.y * textureSize.x;
+        return vec2(modulo(idx, planeSize.x), div(idx, planeSize.x));
+      }
+
+      vec2 convertFromPosCoordToTexCoord(in vec2 posCoord) {
+        float idx = posCoord.x + posCoord.y * planeSize.x;
+        return vec2(modulo(idx, textureSize.x), div(idx, textureSize.x));
+      }
+
+      vec2 state(in vec2 offset) {
+        vec2 posCoord = convertFromTexCoordToPosCoord(floor(gl_FragCoord.xy)) + offset;
+
+        // boundary condition
+        // posCoord.x = posCoord.x < 0.0 ? planeSize.x - 1.0 : posCoord.x;
+        // posCoord.x = posCoord.x > planeSize.x ? 0.0 : posCoord.x;
+        // posCoord.y = posCoord.y < 0.0 ? planeSize.y - 1.0 : posCoord.y;
+        // posCoord.y = posCoord.y > planeSize.y ? 0.0 : posCoord.y;
+
+        vec2 texCoord = convertFromPosCoordToTexCoord(posCoord) + fract(gl_FragCoord.xy);
+        return texture2D(textureLifeGame, texCoord / textureSize.xy).xy;
+      }
+
+      void main() {
+        // checks whether current position is used or not
+        if (!isInPosCoordRange(floor(gl_FragCoord.xy))) {
+          gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+          return;
+        }
+
+        vec2 uv = state(vec2(0.0, 0.0));
+        vec2 uv0 = state(vec2(1.0, 0.0));
+        vec2 uv1 = state(vec2(-1.0, 0.0));
+        vec2 uv2 = state(vec2(0.0, -1.0));
+        vec2 uv3 = state(vec2(0.0, 1.0));
+
+        vec2 lapl = (uv0 + uv1 + uv2 + uv3 - 4.0*uv);
+        float du = lapl.x - uv.x*uv.y*uv.y + feed*(1.0 - uv.x);
+        float dv = lapl.y + uv.x*uv.y*uv.y - (feed+kill) * uv.g;
+        vec2 dst = uv + delta*vec2(du, dv);
+
+        
+        gl_FragColor = vec4(dst.x, dst.y, 0.0, 1.0);
+      }
+
+    </script>
+    <script id="vertexShader" type="x-shader/x-vertex">
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    </script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+      uniform sampler2D textureLifeGame;
+      uniform vec2 planeSize;
+      uniform vec2 textureSize;
+      uniform vec4 color1;
+      uniform vec4 color2;
+      uniform vec4 color3;
+      uniform vec4 color4;
+      uniform vec4 color5;
+      varying vec2 vUv;
+
+      float div(in float a, in float b) {
+        return floor(a / b);
+      }
+
+      float modulo(in float a, in float b) {
+        return a - floor(a / b) * b;
+      }
+
+      vec2 convertFromPosCoordToTexCoord(in vec2 posCoord) {
+        float idx = posCoord.x + posCoord.y * planeSize.x;
+        return vec2(modulo(idx, textureSize.x), div(idx, textureSize.x));
+      }
+
+      void main() {
+        vec2 posCoord = vUv * planeSize;
+        vec2 texCoord = convertFromPosCoordToTexCoord(floor(posCoord));
+        float value = texture2D(textureLifeGame, texCoord / textureSize).x;
+        float a;
+        vec3 col;
+        
+        if(value <= color1.a)
+            col = color1.rgb;
+        if(value > color1.a && value <= color2.a)
+        {
+            a = (value - color1.a)/(color2.a - color1.a);
+            col = mix(color1.rgb, color2.rgb, a);
+        }
+        if(value > color2.a && value <= color3.a)
+        {
+            a = (value - color2.a)/(color3.a - color2.a);
+            col = mix(color2.rgb, color3.rgb, a);
+        }
+        if(value > color3.a && value <= color4.a)
+        {
+            a = (value - color3.a)/(color4.a - color3.a);
+            col = mix(color3.rgb, color4.rgb, a);
+        }
+        if(value > color4.a && value <= color5.a)
+        {
+            a = (value - color4.a)/(color5.a - color4.a);
+            col = mix(color4.rgb, color5.rgb, a);
+        }
+        if(value > color5.a)
+            col = color5.rgb;
+                
+        // gl_FragColor = vec4(col.r, col.g, col.b, 1.0);
+        // alive cells are filled with green and dead ones with black
+        gl_FragColor = value > 0.45? vec4(1.0, 1.0, 1.0, 0.3) : vec4(0.0, 0.0, 0.0, 1.0);
+      }
+    </script>
+    <script src="../libs/three.js"></script>
+    <script src="../libs/controls/OrbitControls.js"></script>
+    <script src="../libs/GPUComputationRenderer.js"></script>
+    <script src="./scene.js"></script>
+ </body>
+</html>

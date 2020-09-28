@@ -115,10 +115,10 @@ function init() {
 
         let ballx, bally, ballz;
 
-        for (let i = 0; i < 30; i++) {
-            ballx = Math.sin(i + 1.26 * time * (1.03 + 0.5 * Math.cos(0.21 * i))) * 0.27 + 0.5;
-            bally = Math.cos(i + 1.12 * time * Math.cos(1.22 + 0.1424 * i)) * 0.27 + 0.5;
-            ballz = Math.cos(i + 1.32 * time * 0.1 * Math.sin((0.92 + 0.53 * i))) * 0.27 + 0.5;
+        for (let i = 0; i < 20; i++) {
+            ballx = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32+ 0.5;
+            bally = Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32 + 0.5;
+            ballz = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32 + 0.5;
             marchingCubes.addBall(ballx, bally, ballz, strength, subtract);
         }
     }
