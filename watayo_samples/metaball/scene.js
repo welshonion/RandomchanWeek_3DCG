@@ -119,8 +119,14 @@ function init() {
             ballx = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32+ 0.5;
             bally = Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32 + 0.5;
             ballz = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32 + 0.5;
+            // debug
+            ballx = 0.5;
+            bally = 0.5;
+            ballz = 0.5;
             marchingCubes.addBall(ballx, bally, ballz, strength, subtract);
         }
+
+        
     }
 
 

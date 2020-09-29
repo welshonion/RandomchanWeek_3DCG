@@ -15,17 +15,6 @@ export function point_cam(pos, center){
 	camera.position.set(pos.x, pos.y, pos.z);
 	camera.lookAt(center);
 
-	/*
-	Update();
-
-	function Update(){
-		camera.position.set(pos);
-		camera.lookAt(center);
-
-		requestAnimationFrame(Update);
-	}
-	*/
-
 	return camera;
 }
 
@@ -44,8 +33,7 @@ export function rot_cam(pos, center, speed=1.0){
 
 	function Update(){
 		t = frame / fps * speed * 2 * Math.PI / 10;
-		camera.position.set(mag * Math.cos(t), pos.y, mag * Math.sin(t));
-		camera.lookAt(center);
+		camera.position.set(mag * Math.cos(t), pos.y, mag * Math.sin(t)); camera.lookAt(center);
 
 		requestAnimationFrame(Update);
 		frame++;
@@ -88,5 +76,26 @@ export function shake_cam(pos, center, speed=1.0, range=3.0){
 		frame++;
 	}
 
+	return camera;
+}
+
+
+export function target_cam(pos, target, offset=new THREE.Vector3(0,0,0)){
+	//// 角度固定でVector3型target + offsetに追従するカメラ
+	const camera = new THREE.PerspectiveCamera(fov, width/height, near, far);
+
+	camera.position.set(pos.x, pos.y, pos.z);
+	camera.lookAt(target.position.x + offset.x, target.position.y + offset.y, target.position.z + offset.z);
+
+	const dif = pos.sub(target.position);
+
+	Update();
+
+	function Update(){
+		camera.position.set(target.position.x + dif.x, target.position.y + dif.y, target.position.z + dif.z);
+		camera.lookAt(target.position.x + offset.x, target.position.y + offset.y, target.position.z + offset.z);
+		
+		requestAnimationFrame(Update);
+	}
 	return camera;
 }
