@@ -3,6 +3,9 @@ import { MMDLoader } from "./libs/examples/jsm/loaders/MMDLoader.js";
 import { MMDAnimationHelper } from "./libs/examples/jsm/animation/MMDAnimationHelper.js";
 import { FBXLoader } from "./libs/examples/jsm/loaders/FBXLoader.js";
 
+// atsu
+import { backscreen } from "./Utils/objects/backscreen.js";
+
 window.addEventListener('load',init);
 
 
@@ -241,5 +244,15 @@ function init(){
     function onError( error ){
         console.log('An error happened');
     };
+
+
+	// atsu
+	function add_screen(){
+		const screen = backscreen(920, 540, 0.1, scene, camera);
+		screen.position.set(0.0, 35, -100.0);
+		screen.lookAt(0.0, screen.position.y, 0.0);
+		scene.add(screen);
+	}
+	add_screen();
 
 }
