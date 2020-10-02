@@ -6,6 +6,9 @@ import { FBXLoader } from "./libs/examples/jsm/loaders/FBXLoader.js";
 // atsu
 import { backscreen } from "./Utils/objects/backscreen.js";
 
+// watayo
+import { metaball } from "./Utils/objects/metaball.js";
+
 window.addEventListener('load',init);
 
 
@@ -253,6 +256,9 @@ function init(){
 		screen.lookAt(0.0, screen.position.y, 0.0);
 		scene.add(screen);
 	}
-	add_screen();
+    add_screen();
+    
+    // watayo
+    metaball(scene, camera);
 
 }
