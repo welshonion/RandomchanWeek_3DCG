@@ -1,27 +1,20 @@
-import { basicVert, basicFrag, lineFrag } from '../myLibs/shaders/shader.js';
+import { basicVert, basicFrag, lineFrag, glitchFrag } from '../myLibs/shaders/shader.js';
+// import "../myLibs/MarchingCubes.js";
 
-let camera;
-let scene;
 let renderer;
 let marchingCubes;
+let time = 0.0;
 
-export function init(scene) {
+export function metaball(scene, camera) {
     // init stats
-    let stats = initStats();
+    // let stats = initStats();
 
-    // sceneオブジェクト->コンテナオブジェクトこれに格納しないと何も描画されない
-    scene = new THREE.Scene();
-    // percpective Camera
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
-    // camera setting
-    camera.position.x = 0;
-    camera.position.y = 150;
-    camera.position.z = 250;
-
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    const canvas = document.createElement('canvas');
 
     // renderer カメラオブジェクトからシーンがどのように見えるのか計算する.
-    renderer = new THREE.WebGLRenderer();
+    renderer = new THREE.WebGLRenderer({
+        canvas: canvas
+    });
     renderer.setClearColor(new THREE.Color(0x000));
     renderer.setSize(window.innerWidth, window.innerHeight);
     // 影を有効にする objectに対して影を落とす物体か落とされる物体か明示する必要がある
@@ -37,11 +30,6 @@ export function init(scene) {
     pointLight.position.set(lightPos.x, lightPos.y, lightPos.z);
     pointLight.castShadow = true;
     scene.add(pointLight);
-
-    // point light helper
-    let sphereSize = 1;
-    let pointLightHelper = new THREE.PointLightHelper(pointLight, sphereSize);
-    scene.add(pointLightHelper);
 
     let light = new THREE.DirectionalLight(0xffffff);
     light.position.set(0, 0, 1);
@@ -96,13 +84,13 @@ export function init(scene) {
     let material = new THREE.ShaderMaterial({
         uniforms: uniform,
         vertexShader: basicVert,
-        fragmentShader: lineFrag,
+        fragmentShader: glitchFrag,
     });
 
     const resolution = 48;
     marchingCubes = new THREE.MarchingCubes(resolution, material, true, true);
-    marchingCubes.position.set(0, 0, 0);
-    marchingCubes.scale.set(100, 100, 100);
+    marchingCubes.position.set(0, 30, -30);
+    marchingCubes.scale.set(15, 15, 15);
 
     scene.add(marchingCubes);
 
@@ -117,49 +105,30 @@ export function init(scene) {
         let ballx, bally, ballz;
 
         for (let i = 0; i < 20; i++) {
-            ballx = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32+ 0.5;
-            bally = Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32 + 0.5;
-            ballz = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.32 + 0.5;
+            ballx = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.3 * Math.sin(time * 0.2) + 0.5;
+            bally = Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.3 * Math.sin(time * 1.3)+ 0.5;
+            ballz = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.3 * Math.abs(Math.sin(time)) + 0.5;
             // debug
-            ballx = 0.5;
-            bally = 0.5;
-            ballz = 0.5;
+            // ballx = 0.5;
+            // bally = 0.5;
+            // ballz = 0.5;
             marchingCubes.addBall(ballx, bally, ballz, strength, subtract);
-        }
-
-        
+        }   
     }
 
-
-    // add dom
-    document.getElementById("WebGL-output").appendChild(renderer.domElement);
-
-    //render setup
-    let controls = new function () {
-        this.hue = 1.0;
-        this.saturation = 1.0;
-        this.lightness = 1.0;
-    }
-    let gui = new dat.GUI();
-    let h = gui.addFolder("pointLight");
-    h.add(controls, 'hue', 0, 1.0, 0.25);
-    h.add(controls, 'saturation', 0.0, 1.0, 0.25);
-    h.add(controls, 'lightness', 0.0, 1.0, 0.25);
-
-    let orbitControls = new THREE.OrbitControls(camera);
-    orbitControls.autoRotate = true;
+    
     let clock = new THREE.Clock();
 
     // call the render function
-    render();
+    Update();
 
     // render function
-    function render() {
-        stats.update();
+    function Update() {
+        // stats.update();
         //sphere.rotation.y=step+=0.01;
         let delta = clock.getDelta();
-        orbitControls.update(delta);
-        let time = clock.elapsedTime;
+
+        time = clock.elapsedTime;
 
         uniform.time.value += delta;
         updateCubes(marchingCubes, time);
@@ -167,35 +136,10 @@ export function init(scene) {
         lightPos.x = 20 * Math.cos(time);
         lightPos.y = 20 * Math.sin(time * 0.4);
         lightPos.z = 20 * Math.cos(time * 0.5);
-        pointLight.position.set(lightPos.x, lightPos.y, lightPos.z);
-        pointLight.color.setHSL(controls.hue, controls.saturation, controls.lightness);
 
         // render using requestAnimationFrame
-        requestAnimationFrame(render);
+        requestAnimationFrame(Update);
         renderer.render(scene, camera);
         // render.clear();
     }
-
-    function initStats() {
-
-        var stats = new Stats();
-
-        stats.setMode(0); // 0: fps, 1: ms
-
-        // Align top-left
-        stats.domElement.style.position = 'absolute';
-        stats.domElement.style.left = '0px';
-        stats.domElement.style.top = '0px';
-
-        document.getElementById("Stats-output").appendChild(stats.domElement);
-
-        return stats;
-    }
 }
-function onResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-window.onload = init;
-window.addEventListener('resize', onResize, false);
