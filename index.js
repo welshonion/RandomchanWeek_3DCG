@@ -251,8 +251,8 @@ function init(){
 
 	// atsu
 	function add_screen(){
-		const screen = backscreen(920, 540, 0.1, scene, camera);
-		screen.position.set(0.0, 35, -100.0);
+		const screen = backscreen(920, 540, 0.7, scene, camera);
+		screen.position.set(0.0, 70, -200.0);
 		screen.lookAt(0.0, screen.position.y, 0.0);
 		scene.add(screen);
 	}
