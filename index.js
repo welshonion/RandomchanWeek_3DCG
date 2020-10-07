@@ -5,6 +5,7 @@ import { FBXLoader } from "./libs/examples/jsm/loaders/FBXLoader.js";
 
 // atsu
 import { backscreen } from "./Utils/objects/backscreen.js";
+import { importFBX } from "./Utils/objects/model_import.js";
 
 // watayo
 import { metaball } from "./Utils/objects/metaball.js";
@@ -250,6 +251,7 @@ function init(){
 
 
 	// atsu
+	//// バックスクリーン
 	function add_screen(){
 		const screen = backscreen(920, 540, 0.8, scene, camera);
 		screen.position.set(0.0, 250, -1000.0);
@@ -257,6 +259,14 @@ function init(){
 		scene.add(screen);
 	}
     add_screen();
+
+	//// オブジェクト
+	const crt = "./atsu_samples/models/Parts/brawn_kan.fbx";
+	const display = "./atsu_samples/models/Parts/display.fbx";
+	const PC = "./atsu_samples/models/Parts/PC_1.fbx";
+	const crtobj = importFBX(crt, new THREE.Vector3(1200.0, -300.0, 90.0), new THREE.Vector3(0.0, 40.0, 90.0), new THREE.Vector3(0.8, 0.8, 0.8), 2.2, scene);
+	const displayobj = importFBX(display, new THREE.Vector3(0.0, 1000.0, 900.0), new THREE.Vector3(20.0, 0.0, 0.0), new THREE.Vector3(0.8, 0.8, 0.8), 0.7, scene);
+	const PCobj = importFBX(PC, new THREE.Vector3(200.0, 200.0, 800.0), new THREE.Vector3(0.0, 30.0, 80.0), new THREE.Vector3(0.8, 0.8, 0.8), 2.5, scene);
     
     // watayo
     metaball(scene, camera);
