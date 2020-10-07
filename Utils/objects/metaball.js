@@ -1,15 +1,16 @@
-import { basicVert, basicFrag, lineFrag, glitchFrag } from '../myLibs/shaders/shader.js';
+import { basicVert, basicFrag, lineFrag, glitchFrag } from '../bin/shaders/shader.js';
 // import "../myLibs/MarchingCubes.js";
 
 let renderer;
 let marchingCubes;
 let time = 0.0;
 
-export function metaball(scene, camera) {
+export function metaball(scene, camera, positionX, positionY, positionZ) {
     // init stats
     // let stats = initStats();
 
     const canvas = document.createElement('canvas');
+    let pos = new THREE.Vector3(positionX, positionY, positionZ);
 
     // renderer カメラオブジェクトからシーンがどのように見えるのか計算する.
     renderer = new THREE.WebGLRenderer({
@@ -21,8 +22,8 @@ export function metaball(scene, camera) {
     // renderer.shadowMap.enabled = true;
 
     // 軸を表示する
-    let axes = new THREE.AxisHelper(20);
-    scene.add(axes);
+    // let axes = new THREE.AxisHelper(20);
+    // scene.add(axes);
 
     // set spotLight
     let pointLight = new THREE.PointLight(0xff3300);
@@ -89,7 +90,7 @@ export function metaball(scene, camera) {
 
     const resolution = 48;
     marchingCubes = new THREE.MarchingCubes(resolution, material, true, true);
-    marchingCubes.position.set(0, 30, -30);
+    marchingCubes.position.set(pos.x, pos.y, pos.z);
     marchingCubes.scale.set(15, 15, 15);
 
     scene.add(marchingCubes);
@@ -106,17 +107,17 @@ export function metaball(scene, camera) {
 
         for (let i = 0; i < 20; i++) {
             ballx = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.3 * Math.sin(time * 0.2) + 0.5;
-            bally = Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.3 * Math.sin(time * 1.3)+ 0.5;
+            bally = Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.3 * Math.sin(time * 1.3) + 0.5;
             ballz = Math.cos(i + time * Math.cos(1.22 + 0.1424 * i)) * Math.sin(i + time * Math.cos(1.22 + 0.1424 * i)) * 0.3 * Math.abs(Math.sin(time)) + 0.5;
             // debug
             // ballx = 0.5;
             // bally = 0.5;
             // ballz = 0.5;
             marchingCubes.addBall(ballx, bally, ballz, strength, subtract);
-        }   
+        }
     }
 
-    
+
     let clock = new THREE.Clock();
 
     // call the render function
@@ -136,6 +137,8 @@ export function metaball(scene, camera) {
         lightPos.x = 20 * Math.cos(time);
         lightPos.y = 20 * Math.sin(time * 0.4);
         lightPos.z = 20 * Math.cos(time * 0.5);
+
+
 
         // render using requestAnimationFrame
         requestAnimationFrame(Update);

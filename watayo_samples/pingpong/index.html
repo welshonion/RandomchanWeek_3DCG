@@ -1,156 +1,521 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>GPGPU Life Game</title>
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
+<head>
+  <title>three.js webgl - gpgpu - protoplanet</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <style>
+    body {
+      background-color: #000000;
+      margin: 0px;
+      overflow: hidden;
+      font-family: Monospace;
+      font-size: 13px;
+      text-align: center;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    a {
+      color: #0078ff;
+    }
+
+    #info {
+      color: #ffffff;
+      position: absolute;
+      top: 10px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+
+
+  <script src="../libs/three.js"></script>
+  <script src="../libs/Detector.js"></script>
+  <script src="../libs/stats.min.js"></script>
+  <script src="../libs/dat.gui.min.js"></script>
+  <script src="../libs/controls/OrbitControls.js"></script>
+
+  <script src="../libs/GPUComputationRenderer.js"></script>
+
+
+  <!-- Fragment shader for protoplanet's position -->
+  <script id="computeShaderPosition" type="x-shader/x-fragment">
+            // 現在の位置情報を決定する
+            #define delta ( 1.0 / 60.0 );
+            void main() {
+                vec2 uv = gl_FragCoord.xy / resolution.xy;
+                vec4 pos = texture2D( texturePosition, uv );
+                vec4 vel = texture2D( textureVelocity, uv );
+                // velが移動する方向(もう一つ下のcomputeShaderVelocityを参照)
+
+                // 移動する方向に速度を掛け合わせた数値を現在地に加える。
+                pos.xyz += vel.xyz * delta;
+                gl_FragColor = vec4( pos.xyz, 1.0 );
+            }
+        </script>
+
+  <!-- Fragment shader for protoplanet's velocity -->
+  <script id="computeShaderVelocity" type="x-shader/x-fragment">
+
+            // 移動方向についていろいろ計算できるシェーダー。
+            // 今回はなにもしてない。
+            // ここでVelのx y zについて情報を上書きすると、それに応じて移動方向が変わる
+            #include <common>
+            uniform float time;
+            #define delta ( 1.0 / 60.0 );
+
+            vec3 mod289(vec3 x) {
+              return x - floor(x * (1.0 / 289.0)) * 289.0;
+            }
+
+            vec4 mod289(vec4 x) {
+              return x - floor(x * (1.0 / 289.0)) * 289.0;
+            }
+
+            vec4 permute(vec4 x) {
+                return mod289(((x*34.0)+1.0)*x);
+            }
+
+            vec4 taylorInvSqrt(vec4 r)
+            {
+              return 1.79284291400159 - 0.85373472095314 * r;
+            }
+
+            float snoise(vec3 v) {
+              const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
+              const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+
+            // First corner
+              vec3 i  = floor(v + dot(v, C.yyy) );
+              vec3 x0 =   v - i + dot(i, C.xxx) ;
+
+            // Other corners
+              vec3 g = step(x0.yzx, x0.xyz);
+              vec3 l = 1.0 - g;
+              vec3 i1 = min( g.xyz, l.zxy );
+              vec3 i2 = max( g.xyz, l.zxy );
+
+              //   x0 = x0 - 0.0 + 0.0 * C.xxx;
+              //   x1 = x0 - i1  + 1.0 * C.xxx;
+              //   x2 = x0 - i2  + 2.0 * C.xxx;
+              //   x3 = x0 - 1.0 + 3.0 * C.xxx;
+              vec3 x1 = x0 - i1 + C.xxx;
+              vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
+              vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
+
+            // Permutations
+              i = mod289(i);
+              vec4 p = permute( permute( permute(
+                        i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                      + i.y + vec4(0.0, i1.y, i2.y, 1.0 ))
+                      + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+
+            // Gradients: 7x7 points over a square, mapped onto an octahedron.
+            // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
+              float n_ = 0.142857142857; // 1.0/7.0
+              vec3  ns = n_ * D.wyz - D.xzx;
+
+              vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
+
+              vec4 x_ = floor(j * ns.z);
+              vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
+
+              vec4 x = x_ *ns.x + ns.yyyy;
+              vec4 y = y_ *ns.x + ns.yyyy;
+              vec4 h = 1.0 - abs(x) - abs(y);
+
+              vec4 b0 = vec4( x.xy, y.xy );
+              vec4 b1 = vec4( x.zw, y.zw );
+
+              //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
+              //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
+              vec4 s0 = floor(b0)*2.0 + 1.0;
+              vec4 s1 = floor(b1)*2.0 + 1.0;
+              vec4 sh = -step(h, vec4(0.0));
+
+              vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+              vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+
+              vec3 p0 = vec3(a0.xy,h.x);
+              vec3 p1 = vec3(a0.zw,h.y);
+              vec3 p2 = vec3(a1.xy,h.z);
+              vec3 p3 = vec3(a1.zw,h.w);
+
+            //Normalise gradients
+              vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+              p0 *= norm.x;
+              p1 *= norm.y;
+              p2 *= norm.z;
+              p3 *= norm.w;
+
+            // Mix final noise value
+              vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+              m = m * m;
+              return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1),
+                                            dot(p2,x2), dot(p3,x3) ) );
+            }
+
+            vec3 snoiseVec3(vec3 x) {
+                float s  = snoise(vec3( x ));
+                float s1 = snoise(vec3( x.y - 19.1 , x.z + 33.4 , x.x + 47.2 ));
+                float s2 = snoise(vec3( x.z + 74.2 , x.x - 124.5 , x.y + 99.4 ));
+                vec3 c = vec3( s , s1 , s2 );
+                return c;
+            }
+
+            vec3 snoiseDelta(vec3 pos){
+                float del = 0.1;
+                vec3 a = snoiseVec3(vec3(pos.x, pos.y, pos.z));
+                vec3 b = snoiseVec3(vec3(pos.x + del, pos.y + del, pos.z + del));
+                vec3 dt = vec3(a.x - b.x,a.y - b.y,a.z - b.z) / del;
+                return dt;
+            }
+
+            vec3 curlNoise(vec3 pos, float id) {
+              const float e = 0.001;
+              const float e2 = 2.0 * e;
+
+              vec3 dx = vec3( e   , 0.0 , 0.0 );
+              vec3 dy = vec3( 0.0 , e   , 0.0 );
+              vec3 dz = vec3( 0.0 , 0.0 , e   );
+
+              vec3 p_x0 = snoiseVec3( pos - dx );
+              vec3 p_x1 = snoiseVec3( pos + dx );
+              vec3 p_y0 = snoiseVec3( pos - dy );
+              vec3 p_y1 = snoiseVec3( pos + dy );
+              vec3 p_z0 = snoiseVec3( pos - dz );
+              vec3 p_z1 = snoiseVec3( pos + dz );
+
+              float x = p_y1.z - p_y0.z - p_z1.y + p_z0.y;
+              float y = p_z1.x - p_z0.x - p_x1.z + p_x0.z;
+              float z = p_x1.y - p_x0.y - p_y1.x + p_y0.x;
+
+              return normalize(vec3(x, y, z) / e2);
+            }
+
+
+
+            void main() {
+                vec2 uv = gl_FragCoord.xy / resolution.xy;
+                float idParticle = uv.y * resolution.x + uv.x;
+                vec3 pos = texture2D( texturePosition, uv ).xyz;
+                vec3 vel = texture2D( textureVelocity, uv ).xyz;
+
+                vel += curlNoise(0.005 * pos, idParticle) * 10.0;
+                // vel -= snoiseDelta(pos) * 0.1;
+                vel -= normalize(pos) * length(pos) * 0.02;
+                vel *= .93;
+
+                gl_FragColor = vec4( vel.xyz, 1.0 );
+            }
+        </script>
+
+  <!-- Particles vertex shader -->
+  <script type="x-shader/x-vertex" id="particleVertexShader">
+
+
+            #include <common>
+            uniform sampler2D texturePosition;
+            uniform float cameraConstant;
+            uniform float density;
+            varying vec4 vColor;
+            varying vec2 vUv;
+            uniform float radius;
+
+
+
+            void main() {
+                vec4 posTemp = texture2D( texturePosition, uv );
+                vec3 pos = posTemp.xyz;
+                vColor = vec4( 1.0, 0.7, 1.0, 1.0 );
+
+                // ポイントのサイズを決定
+                vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
+                gl_PointSize = 0.5 * cameraConstant / ( - mvPosition.z );
+                gl_PointSize = 15.0;
+
+                // uv情報の引き渡し
+                vUv = uv;
+
+                // 変換して格納
+                gl_Position = projectionMatrix * mvPosition;
+            }
+        </script>
+
+  <!-- Particles fragment shader -->
+  <script type="x-shader/x-fragment" id="particleFragmentShader">
+            // VertexShaderから受け取った色を格納するだけ。
+            varying vec4 vColor;
+            void main() {
+              /*
+                長方形に色をぬるための計算
+                vec2 f = gl_PointCoord - vec2( 0.5, 0.5 );
+
+
+                if ( f.x > 0.1 || f.y > 0.1 ) {
+                  discard;
+                }
+              */
+
+                gl_FragColor = vColor;
+            }
+        </script>
+
+
+  <script>
+    if (!Detector.webgl) Detector.addGetWebGLMessage();
+    // 今回は25万パーティクルを動かすことに挑戦
+    // なので1辺が500のテクスチャを作る。
+    // 500 * 500 = 250000
+    var WIDTH = 500;
+    var PARTICLES = WIDTH * WIDTH;
+
+    // メモリ負荷確認用
+    var stats;
+
+    // 基本セット
+    var container, camera, scene, renderer, geometry, controls;
+
+
+
+
+
+    // gpgpuをするために必要なオブジェクト達
+    var gpuCompute;
+    var velocityVariable;
+    var positionVariable;
+    var positionUniforms;
+    var velocityUniforms;
+    var particleUniforms;
+    var effectController;
+
+    init();
+    animate();
+    function init() {
+
+
+      // 一般的なThree.jsにおける定義部分
+      container = document.createElement('div');
+      document.body.appendChild(container);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 5, 15000);
+      camera.position.y = 120;
+      camera.position.z = 200;
+      scene = new THREE.Scene();
+      renderer = new THREE.WebGLRenderer();
+      renderer.setClearColor(0x000000);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      stats = new Stats();
+      container.appendChild(stats.dom);
+      window.addEventListener('resize', onWindowResize, false);
+
+
+      // ***** このコメントアウトについては後述 ***** //
+      //        effectController = {
+      //            time: 0.0,
+      //        };
+
+
+      // ①gpuCopute用のRenderを作る
+      initComputeRenderer();
+
+      // ②particle 初期化
+      initPosition();
+
+    }
+
+
+    // ①gpuCopute用のRenderを作る
+    function initComputeRenderer() {
+
+      // gpgpuオブジェクトのインスタンスを格納
+      gpuCompute = new GPUComputationRenderer(WIDTH, WIDTH, renderer);
+
+      // 今回はパーティクルの位置情報と、移動方向を保存するテクスチャを2つ用意します
+      var dtPosition = gpuCompute.createTexture();
+      var dtVelocity = gpuCompute.createTexture();
+
+      // テクスチャにGPUで計算するために初期情報を埋めていく
+      fillTextures(dtPosition, dtVelocity);
+
+      // shaderプログラムのアタッチ
+      velocityVariable = gpuCompute.addVariable("textureVelocity", document.getElementById('computeShaderVelocity').textContent, dtVelocity);
+      positionVariable = gpuCompute.addVariable("texturePosition", document.getElementById('computeShaderPosition').textContent, dtPosition);
+
+      // 一連の関係性を構築するためのおまじない
+      gpuCompute.setVariableDependencies(velocityVariable, [positionVariable, velocityVariable]);
+      gpuCompute.setVariableDependencies(positionVariable, [positionVariable, velocityVariable]);
+
+
+      // uniform変数を登録したい場合は以下のように作る
+      /*
+      positionUniforms = positionVariable.material.uniforms;
+      velocityUniforms = velocityVariable.material.uniforms;
+
+      velocityUniforms.time = { value: 0.0 };
+      positionUniforms.time = { ValueB: 0.0 };
+      ***********************************
+      たとえば、上でコメントアウトしているeffectControllerオブジェクトのtimeを
+      わたしてあげれば、effectController.timeを更新すればuniform変数も変わったり、ということができる
+      velocityUniforms.time = { value: effectController.time };
+      ************************************
+      */
+
+      // error処理
+      var error = gpuCompute.init();
+      if (error !== null) {
+        console.error(error);
       }
-    </style>
-    </head>
-    <body>
-    <script id="shaderLifeGame" type="x-shader/x-fragment">
-      // "uniform vec2 resolution" is automatically added by GPUComputationRenderer as texture size
-      uniform vec2 planeSize;
-      #define delta (1.0 / 60.0)
-      vec2 textureSize = resolution;
-      
-      float feed = 0.017;
-      float kill = 0.078;
+    }
 
-      bool isInPosCoordRange(in vec2 texCoord) {
-        float v = texCoord.x + texCoord.y * textureSize.x;
-        return v <= (planeSize.x * planeSize.y);
+    // restart用関数 今回は使わない
+    function restartSimulation() {
+      var dtPosition = gpuCompute.createTexture();
+      var dtVelocity = gpuCompute.createTexture();
+      fillTextures(dtPosition, dtVelocity);
+      gpuCompute.renderTexture(dtPosition, positionVariable.renderTargets[0]);
+      gpuCompute.renderTexture(dtPosition, positionVariable.renderTargets[1]);
+      gpuCompute.renderTexture(dtVelocity, velocityVariable.renderTargets[0]);
+      gpuCompute.renderTexture(dtVelocity, velocityVariable.renderTargets[1]);
+    }
+
+    // ②パーティクルそのものの情報を決めていく。
+    function initPosition() {
+
+      // 最終的に計算された結果を反映するためのオブジェクト。
+      // 位置情報はShader側(texturePosition, textureVelocity)
+      // で決定されるので、以下のように適当にうめちゃってOK
+
+      geometry = new THREE.BufferGeometry();
+      var positions = new Float32Array(PARTICLES * 3);
+      var p = 0;
+      for (var i = 0; i < PARTICLES; i++) {
+        positions[p++] = 0;
+        positions[p++] = 0;
+        positions[p++] = 0;
       }
 
-      float div(in float a, in float b) {
-        return floor(a / b);
-      }
-
-      float modulo(in float a, in float b) {
-        return a - floor(a / b) * b;
-      }
-
-      vec2 convertFromTexCoordToPosCoord(in vec2 texCoord) {
-        float idx = texCoord.x + texCoord.y * textureSize.x;
-        return vec2(modulo(idx, planeSize.x), div(idx, planeSize.x));
-      }
-
-      vec2 convertFromPosCoordToTexCoord(in vec2 posCoord) {
-        float idx = posCoord.x + posCoord.y * planeSize.x;
-        return vec2(modulo(idx, textureSize.x), div(idx, textureSize.x));
-      }
-
-      vec2 state(in vec2 offset) {
-        vec2 posCoord = convertFromTexCoordToPosCoord(floor(gl_FragCoord.xy)) + offset;
-
-        // boundary condition
-        // posCoord.x = posCoord.x < 0.0 ? planeSize.x - 1.0 : posCoord.x;
-        // posCoord.x = posCoord.x > planeSize.x ? 0.0 : posCoord.x;
-        // posCoord.y = posCoord.y < 0.0 ? planeSize.y - 1.0 : posCoord.y;
-        // posCoord.y = posCoord.y > planeSize.y ? 0.0 : posCoord.y;
-
-        vec2 texCoord = convertFromPosCoordToTexCoord(posCoord) + fract(gl_FragCoord.xy);
-        return texture2D(textureLifeGame, texCoord / textureSize.xy).xy;
-      }
-
-      void main() {
-        // checks whether current position is used or not
-        if (!isInPosCoordRange(floor(gl_FragCoord.xy))) {
-          gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-          return;
+      // uv情報の決定。テクスチャから情報を取り出すときに必要
+      var uvs = new Float32Array(PARTICLES * 2);
+      p = 0;
+      for (var j = 0; j < WIDTH; j++) {
+        for (var i = 0; i < WIDTH; i++) {
+          uvs[p++] = i / (WIDTH - 1);
+          uvs[p++] = j / (WIDTH - 1);
         }
-
-        vec2 uv = state(vec2(0.0, 0.0));
-        vec2 uv0 = state(vec2(1.0, 0.0));
-        vec2 uv1 = state(vec2(-1.0, 0.0));
-        vec2 uv2 = state(vec2(0.0, -1.0));
-        vec2 uv3 = state(vec2(0.0, 1.0));
-
-        vec2 lapl = (uv0 + uv1 + uv2 + uv3 - 4.0*uv);
-        float du = lapl.x - uv.x*uv.y*uv.y + feed*(1.0 - uv.x);
-        float dv = lapl.y + uv.x*uv.y*uv.y - (feed+kill) * uv.g;
-        vec2 dst = uv + delta*vec2(du, dv);
-
-        
-        gl_FragColor = vec4(dst.x, dst.y, 0.0, 1.0);
       }
 
-    </script>
-    <script id="vertexShader" type="x-shader/x-vertex">
-      varying vec2 vUv;
+      // attributeをgeometryに登録する
+      geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.addAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    </script>
-    <script id="fragmentShader" type="x-shader/x-fragment">
-      uniform sampler2D textureLifeGame;
-      uniform vec2 planeSize;
-      uniform vec2 textureSize;
-      uniform vec4 color1;
-      uniform vec4 color2;
-      uniform vec4 color3;
-      uniform vec4 color4;
-      uniform vec4 color5;
-      varying vec2 vUv;
 
-      float div(in float a, in float b) {
-        return floor(a / b);
-      }
+      // uniform変数をオブジェクトで定義
+      // 今回はカメラをマウスでいじれるように、計算に必要な情報もわたす。
+      particleUniforms = {
+        texturePosition: { value: null },
+        textureVelocity: { value: null },
+        time: { value: 0.0 },
+        cameraConstant: { value: getCameraConstant(camera) }
+      };
 
-      float modulo(in float a, in float b) {
-        return a - floor(a / b) * b;
-      }
 
-      vec2 convertFromPosCoordToTexCoord(in vec2 posCoord) {
-        float idx = posCoord.x + posCoord.y * planeSize.x;
-        return vec2(modulo(idx, textureSize.x), div(idx, textureSize.x));
-      }
 
-      void main() {
-        vec2 posCoord = vUv * planeSize;
-        vec2 texCoord = convertFromPosCoordToTexCoord(floor(posCoord));
-        float value = texture2D(textureLifeGame, texCoord / textureSize).x;
-        float a;
-        vec3 col;
-        
-        if(value <= color1.a)
-            col = color1.rgb;
-        if(value > color1.a && value <= color2.a)
-        {
-            a = (value - color1.a)/(color2.a - color1.a);
-            col = mix(color1.rgb, color2.rgb, a);
-        }
-        if(value > color2.a && value <= color3.a)
-        {
-            a = (value - color2.a)/(color3.a - color2.a);
-            col = mix(color2.rgb, color3.rgb, a);
-        }
-        if(value > color3.a && value <= color4.a)
-        {
-            a = (value - color3.a)/(color4.a - color3.a);
-            col = mix(color3.rgb, color4.rgb, a);
-        }
-        if(value > color4.a && value <= color5.a)
-        {
-            a = (value - color4.a)/(color5.a - color4.a);
-            col = mix(color4.rgb, color5.rgb, a);
-        }
-        if(value > color5.a)
-            col = color5.rgb;
-                
-        // gl_FragColor = vec4(col.r, col.g, col.b, 1.0);
-        // alive cells are filled with green and dead ones with black
-        gl_FragColor = value > 0.45? vec4(1.0, 1.0, 1.0, 0.3) : vec4(0.0, 0.0, 0.0, 1.0);
+      // Shaderマテリアル これはパーティクルそのものの描写に必要なシェーダー
+      var material = new THREE.ShaderMaterial({
+        uniforms: particleUniforms,
+        vertexShader: document.getElementById('particleVertexShader').textContent,
+        fragmentShader: document.getElementById('particleFragmentShader').textContent
+      });
+      material.extensions.drawBuffers = true;
+      var particles = new THREE.Points(geometry, material);
+      particles.matrixAutoUpdate = false;
+      particles.updateMatrix();
+
+      // パーティクルをシーンに追加
+      scene.add(particles);
+    }
+
+
+    function fillTextures(texturePosition, textureVelocity) {
+
+      // textureのイメージデータをいったん取り出す
+      var posArray = texturePosition.image.data;
+      var velArray = textureVelocity.image.data;
+
+      // パーティクルの初期の位置は、ランダムなXZに平面おく。
+      // 板状の正方形が描かれる
+
+      let range = 200;
+      for (var k = 0, kl = posArray.length; k < kl; k += 4) {
+        // Position
+        let x, y, z;
+        x = Math.random() * range - range / 2;
+        y = Math.random() * range - range / 2;
+        z = Math.random() * range - range / 2;
+        // posArrayの実態は一次元配列なので
+        // x,y,z,wの順番に埋めていく。
+        // wは今回は使用しないが、配列の順番などを埋めておくといろいろ使えて便利
+        posArray[k + 0] = x;
+        posArray[k + 1] = y;
+        posArray[k + 2] = z;
+        posArray[k + 3] = 0;
+
+        let vx, vy, vz;
+        vx = Math.random() * 1 - 1 / 2;
+        vy = Math.random() * 1 - 1 / 2;
+        vz = Math.random() * 1 - 1 / 2;
+        // 移動する方向はとりあえずランダムに決めてみる。
+        // これでランダムな方向にとぶパーティクルが出来上がるはず。
+        velArray[k + 0] = vx;
+        velArray[k + 1] = vy;
+        velArray[k + 2] = vz;
+        velArray[k + 3] = 0;
       }
-    </script>
-    <script src="../libs/three.js"></script>
-    <script src="../libs/controls/OrbitControls.js"></script>
-    <script src="../libs/GPUComputationRenderer.js"></script>
-    <script src="./scene.js"></script>
- </body>
-</html>
+    }
+
+
+
+    // カメラオブジェクトからシェーダーに渡したい情報を引っ張ってくる関数
+    // カメラからパーティクルがどれだけ離れてるかを計算し、パーティクルの大きさを決定するため。
+    function getCameraConstant(camera) {
+      return window.innerHeight / (Math.tan(THREE.Math.DEG2RAD * 0.5 * camera.fov) / camera.zoom);
+    }
+
+    // 画面がリサイズされたときの処理
+    // ここでもシェーダー側に情報を渡す。
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      particleUniforms.cameraConstant.value = getCameraConstant(camera);
+    }
+
+
+    function animate() {
+      requestAnimationFrame(animate);
+      render();
+      stats.update();
+    }
+
+
+
+    function render() {
+      let delta = new THREE.Clock().getDelta;
+      // 計算用のテクスチャを更新
+      gpuCompute.compute();
+
+      // 計算した結果が格納されたテクスチャをレンダリング用のシェーダーに渡す
+      particleUniforms.texturePosition.value = gpuCompute.getCurrentRenderTarget(positionVariable).texture;
+      particleUniforms.textureVelocity.value = gpuCompute.getCurrentRenderTarget(velocityVariable).texture;
+      particleUniforms.time.value += delta;
+
+      renderer.render(scene, camera);
+    }
+  </script>
+</body>
