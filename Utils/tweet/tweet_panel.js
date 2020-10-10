@@ -1,6 +1,8 @@
 import { ShaderMaterial } from '../../libs/src/materials/shadermaterial.js';
-
+import { tweet } from './tweet.js';
+/*
 const testdata = [
+	{"name":"これは65字です", "tweet":"あああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ"},
 	{"name":"hoge", "tweet":"hogehoge"},
 	{"name":"aefewd", "tweet":"miria"},
 	{"name":"VD", "tweet":"滲み出す混濁の紋章、不遜なる狂気の器、湧き上がり・否定し・痺れ・瞬き・眠りを妨げる爬行する鉄の王女、絶えず自壊する泥の人形、結合せよ、反発せよ、地に満ち 己の無力を知れ　破道の九十・黒棺"},
@@ -9,6 +11,7 @@ const testdata = [
 	{"name":"これは140字です", "tweet":"ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ"},
 	{"name":"666", "tweet":"ぺこ"}
 ];
+*/
 
 const width_per_tweet = 512;
 const height_per_tweet = 134;
@@ -16,16 +19,10 @@ const font_step = 66;//この文字数以上のツイートは小さく表示
 
 export function tweet_panel(scale){
 	//// tweetをyoutube live 風に表示するパネル
-	const File = null;// TODO jsonファイルのディレクトリ
-	const max_per_line = [22, 36];
+	const max_per_line = [24, 35];
 
 	const canvas = document.createElement('canvas');
-	let tweets;
-	if(!File){
-		tweets = testdata;
-	}else{
-		tweets = JSON.parse(File);
-	}
+	let tweets = tweet;
 
 	/* canvas描画*/
 	const twesize = tweets.length;
@@ -43,24 +40,25 @@ export function tweet_panel(scale){
 
 	for(let i = 0;i < twesize;i++){
 		//// アカウント名
-		ctx.font = "20px 'MS Pゴシック'"
+		ctx.font = "x-large 'Yu Mincho'";
 		ctx.fillStyle = "rgb(0, 0, 0)";
 		ctx.fillText(tweets[i]["name"], 20, 40 + i * height_per_tweet);
 
 		//// ツイート内容
 		let font_style, h_per_l, issmall;
-		if(tweets[i]["tweet"] < font_step){
-			font_style = "20px 'MS Pゴシック'" ;
-			h_per_l = 30;
+		if(tweets[i]["tweet"].length < font_step){
+			font_style = "large 'Yu Mincho'";
+			h_per_l = 26;
 			issmall = 0;
 		}else{
-			font_style = "12px 'MS Pゴシック'" ;
+			font_style = "small 'Yu Mincho'";
 			h_per_l = 17;
 			issmall = 1;
 		}
 		for(let k = 0;k < twelines[i];k++){
 			const content = tweets[i]["tweet"].substr(k * max_per_line[issmall], max_per_line[issmall]);
 			ctx.font = font_style;
+			console.log(font_style);
 			ctx.fillStyle = "rgb(0, 0, 0)";
 			ctx.fillText(content, 40, 70 + i * height_per_tweet + k * h_per_l);
 		}
@@ -143,14 +141,14 @@ varying vec2 vUv;
 
 void main() {
 	vec2 texUV = vUv;
-	texUV.y = texUV.y * 4.0 / num_tweet + 0.44;
+	texUV.y = texUV.y * 4.0 / num_tweet;
 
 	float cycle = 120.0;
 	float stay = 80.0;
 	float t = mod(time, cycle);
 	float now = floor(time / cycle);
-	texUV.y += now / num_tweet;
-	texUV.y += max(0.0, t - stay) / (cycle - stay) / num_tweet;
+	texUV.y -= now / num_tweet;
+	texUV.y -= max(0.0, t - stay) / (cycle - stay) / num_tweet;
 
 	texUV.y = fract(texUV.y);
 	vec3 color = texture2D(map, texUV).rgb;
