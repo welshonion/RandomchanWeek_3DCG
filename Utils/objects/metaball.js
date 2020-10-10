@@ -30,11 +30,11 @@ export function metaball(scene, camera, positionX, positionY, positionZ) {
     let lightPos = new THREE.Vector3(30, 30, 30);
     pointLight.position.set(lightPos.x, lightPos.y, lightPos.z);
     pointLight.castShadow = true;
-    scene.add(pointLight);
+  //  scene.add(pointLight);
 
     let light = new THREE.DirectionalLight(0xffffff);
     light.position.set(0, 0, 1);
-    scene.add(light);
+//    scene.add(light);
 
     // MetaBoll
     let metaMaterial = new THREE.MeshPhongMaterial({

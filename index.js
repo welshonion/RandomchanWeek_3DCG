@@ -92,12 +92,11 @@ function init() {
 
 
     //Light
-    const directionalLight = new THREE.DirectionalLight(0xFFFFFF);
-    directionalLight.position.set(1, 1, 1);
-    //scene.add(directionalLight);
+    const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.9);
+    directionalLight.position.set(1, 1, -4);
+    scene.add(directionalLight);
 
-    const ambientLight = new THREE.DirectionalLight(0xFFFFFF);
-    ambientLight.position.set(1, 1, 100);
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.3);
     scene.add(ambientLight);
 
     document.addEventListener('moucemove', event => {
