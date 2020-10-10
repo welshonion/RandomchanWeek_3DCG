@@ -43,9 +43,11 @@ function init() {
     //Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
     camera.position.set(0, 30, +100);
+    const orbit_cam = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+    orbit_cam.position.set(0, 30, +100);
 
     //Control
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(orbit_cam, renderer.domElement);
 
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
@@ -228,7 +230,7 @@ function init() {
 
         meshSphere.rotation.y += 0.01;
 
-        renderer.render(scene, camera);
+        renderer.render(scene, orbit_cam);
         requestAnimationFrame(tick);
     }
 
