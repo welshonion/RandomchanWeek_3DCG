@@ -15,14 +15,14 @@ window.addEventListener('load', init);
 
 
 function init() {
-    const loadBtn = document.getElementById('loadBtn');
+    /*const loadBtn = document.getElementById('loadBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const unpauseBtn = document.getElementById('unpauseBtn');
     const stopBtn = document.getElementById('stopBtn');
     loadBtn.addEventListener('click', load);
     pauseBtn.addEventListener('click', pause);
     unpauseBtn.addEventListener('click', unpause);
-    stopBtn.addEventListener('click', stop);
+    stopBtn.addEventListener('click', stop);*/
 
     let playBtn;
 
@@ -108,6 +108,8 @@ function init() {
     document.addEventListener('moucemove', event => {
         mouseX = event.pageX;
     })
+
+    load();
 
     tick();
 
