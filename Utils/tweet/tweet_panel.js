@@ -76,12 +76,13 @@ export function tweet_panel(scale){
 
 	let time = 0.0;
 
-	const geometry = new THREE.PlaneGeometry(canvas.width * scale, canvas.height * scale);
+	const geometry = new THREE.PlaneGeometry(canvas.width * scale, height_per_tweet * 4 * scale);
 	const texture = new THREE.Texture(canvas);
 	const material = new ShaderMaterial({
 		uniforms:{
 			map:{ value:texture },
 			time:{ value:time },
+			num_tweet:{ value:twesize }
 		},
 		vertexShader:vert,
 		fragmentShader:frag
@@ -103,6 +104,20 @@ export function tweet_panel(scale){
 	}
 	return screen;
 }
+
+function count_lines(tweets, max_letters){
+	let lines = [];
+	for(let i = 0;i < tweets.length;i++){
+		if(tweets[i]["tweet"].length < font_step){
+			lines.push(Math.floor(tweets[i]["tweet"].length / max_letters[0]) + 1);
+		}
+		else{
+			lines.push(Math.floor(tweets[i]["tweet"].length / max_letters[1]) + 1);
+		}
+	}
+	return lines;
+}
+
 export const vert =
     `
 precision mediump float;
@@ -121,27 +136,24 @@ export const frag =
 precision mediump float;
 uniform float time;
 uniform sampler2D map;
+uniform float num_tweet;
 varying vec3 vNormal;
 varying vec3 vPosition;
 varying vec2 vUv;
 
 void main() {
 	vec2 texUV = vUv;
-	
+	texUV.y = texUV.y * 4.0 / num_tweet + 0.44;
+
+	float cycle = 120.0;
+	float stay = 80.0;
+	float t = mod(time, cycle);
+	float now = floor(time / cycle);
+	texUV.y += now / num_tweet;
+	texUV.y += max(0.0, t - stay) / (cycle - stay) / num_tweet;
+
+	texUV.y = fract(texUV.y);
 	vec3 color = texture2D(map, texUV).rgb;
     gl_FragColor = vec4(color, 0.8);
 }
     `
-
-function count_lines(tweets, max_letters){
-	let lines = [];
-	for(let i = 0;i < tweets.length;i++){
-		if(tweets[i]["tweet"].length < font_step){
-			lines.push(Math.floor(tweets[i]["tweet"].length / max_letters[0]) + 1);
-		}
-		else{
-			lines.push(Math.floor(tweets[i]["tweet"].length / max_letters[1]) + 1);
-		}
-	}
-	return lines;
-}
