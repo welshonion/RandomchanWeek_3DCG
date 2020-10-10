@@ -6,6 +6,7 @@ import { FBXLoader } from "./libs/examples/jsm/loaders/FBXLoader.js";
 // atsu
 import { backscreen } from "./Utils/objects/backscreen.js";
 import { importFBX } from "./Utils/objects/model_import.js";
+import { tweet_panel } from "./Utils/tweet/tweet_panel.js";
 
 // watayo
 import { metaball } from "./Utils/objects/metaball.js";
@@ -268,6 +269,15 @@ function init() {
 	const crtobj = importFBX(crt, new THREE.Vector3(130.0, -4.0, 17.0), new THREE.Vector3(0.0, 40.0, 270.0), new THREE.Vector3(0.05, 0.05, 0.05), 2.2, scene);
 	const displayobj = importFBX(display, new THREE.Vector3(0.0, 70.0, 132.0), new THREE.Vector3(20.0, 0.0, 0.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.2, scene);
 	const PCobj = importFBX(PC, new THREE.Vector3(61.0, 16.0, 140.0), new THREE.Vector3(0.0, 70.0, 20.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.7, scene);
+
+	//// ツイート表示
+	function add_tweet(){
+		const twe_panel = tweet_panel(0.1);
+		twe_panel.position.set(80.0, 28, -100.0);
+		twe_panel.lookAt(0.0, twe_panel.position.y, 0.0);
+		scene.add(twe_panel);
+	}
+    add_tweet();
     
     // watayo
     let time = new THREE.Clock().elapsedTime;
