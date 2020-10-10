@@ -250,17 +250,6 @@ function init() {
     };
 
 
-<<<<<<< HEAD
-    // atsu
-    function add_screen() {
-        const screen = backscreen(920, 540, 0.1, scene, camera);
-        screen.position.set(0.0, 35, -100.0);
-        screen.lookAt(0.0, screen.position.y, 0.0);
-        scene.add(screen);
-    }
-    add_screen();
-
-=======
 	// atsu
 	//// バックスクリーン
 	function add_screen(){
@@ -279,7 +268,6 @@ function init() {
 	const displayobj = importFBX(display, new THREE.Vector3(0.0, 1000.0, 900.0), new THREE.Vector3(20.0, 0.0, 0.0), new THREE.Vector3(0.8, 0.8, 0.8), 0.7, scene);
 	const PCobj = importFBX(PC, new THREE.Vector3(200.0, 200.0, 800.0), new THREE.Vector3(0.0, 30.0, 80.0), new THREE.Vector3(0.8, 0.8, 0.8), 2.5, scene);
     
->>>>>>> 51806d1305ee1aa894e939c4584883b03aa764ef
     // watayo
     let time = new THREE.Clock().elapsedTime;
     metaball(scene, camera, 0, 30, -30);
