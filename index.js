@@ -154,7 +154,7 @@ function init() {
                                 sound.setBuffer(buffer);
                                 sound.setLoop(true);
                                 listener.position.z = 1;
-                                sound.setVolume(0.5);
+                                sound.setVolume(0.1);
 
                                 /*****option:カメラモーションのロード*****/
                                 mmdLoader.loadAnimation(
@@ -280,7 +280,7 @@ function init() {
 	//// ツイート表示
 	function add_tweet(){
 		const twe_panel = tweet_panel(0.1);
-		twe_panel.position.set(80.0, 28, -100.0);
+		twe_panel.position.set(70.0, 28, -50.0);
 		twe_panel.lookAt(0.0, twe_panel.position.y, 0.0);
 		scene.add(twe_panel);
 	}
