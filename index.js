@@ -92,12 +92,18 @@ function init() {
 
 
     //Light
-    const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 0.9);
-    directionalLight.position.set(1, 1, -4);
-    scene.add(directionalLight);
+    const directionalLight1 = new THREE.DirectionalLight(0xFFFFFF, 0.9);
+    directionalLight1.position.set(1, 1, -4);
+    scene.add(directionalLight1);
+    const directionalLight2 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+    directionalLight2.position.set(2, 1, 3);
+    scene.add(directionalLight2);
 
-    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.3);
+	/*
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.1);
     scene.add(ambientLight);
+	*/
+
 
     document.addEventListener('moucemove', event => {
         mouseX = event.pageX;
@@ -267,7 +273,7 @@ function init() {
 	const crt = "./atsu_samples/models/Parts/brawn_kan.fbx";
 	const display = "./atsu_samples/models/Parts/display.fbx";
 	const PC = "./atsu_samples/models/Parts/PC_1.fbx";
-	const crtobj = importFBX(crt, new THREE.Vector3(130.0, -4.0, 17.0), new THREE.Vector3(0.0, 40.0, 270.0), new THREE.Vector3(0.05, 0.05, 0.05), 2.2, scene);
+	const crtobj = importFBX(crt, new THREE.Vector3(130.0, -4.0, 50.0), new THREE.Vector3(0.0, 40.0, 270.0), new THREE.Vector3(0.05, 0.05, 0.05), 2.2, scene);
 	const displayobj = importFBX(display, new THREE.Vector3(0.0, 70.0, 132.0), new THREE.Vector3(20.0, 0.0, 0.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.2, scene);
 	const PCobj = importFBX(PC, new THREE.Vector3(61.0, 16.0, 140.0), new THREE.Vector3(0.0, 70.0, 20.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.7, scene);
 
