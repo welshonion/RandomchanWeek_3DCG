@@ -112,6 +112,7 @@ function init() {
         fbxLoader.load(
             stagePath,
             function (object) {
+                object.scale.set(0.08,0.08,0.08);
                 scene.add(object);
             },
             onProgress,

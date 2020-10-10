@@ -46,6 +46,7 @@
 
 </head>
 <body>
+
     <!--<input id="btn" type="button" value="Play" onclick="init()">-->
     <button id="loadBtn">Load</button>
     <button id="pauseBtn">Pause</button>
