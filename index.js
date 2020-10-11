@@ -7,6 +7,10 @@ import { FBXLoader } from "./libs/examples/jsm/loaders/FBXLoader.js";
 import { backscreen } from "./Utils/objects/backscreen.js";
 import { importFBX } from "./Utils/objects/model_import.js";
 import { tweet_panel } from "./Utils/tweet/tweet_panel.js";
+import { EffectComposer } from "./libs/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "./libs/examples/jsm/postprocessing/RenderPass.js";
+import { FilmPass } from "./libs/examples/jsm/postprocessing/FilmPass.js";
+import { GlitchPass } from "./libs/examples/jsm/postprocessing/GlitchPass.js";
 
 // watayo
 import { metaball } from "./Utils/objects/metaball.js";
@@ -30,13 +34,6 @@ function init() {
     let height = 540;
     var clock = new THREE.Clock();
 
-    //Renderer
-    const renderer = new THREE.WebGLRenderer({
-        canvas: document.querySelector('#myCanvas')
-    });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
-
     //Scene
     const scene = new THREE.Scene();
 
@@ -45,6 +42,19 @@ function init() {
     camera.position.set(0, 30, +100);
     const orbit_cam = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
     orbit_cam.position.set(0, 30, +100);
+
+    //Renderer
+    const renderer = new THREE.WebGLRenderer({
+        canvas: document.querySelector('#myCanvas')
+    });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+	const composer = new EffectComposer(renderer);
+	const renderPass = new RenderPass(scene, orbit_cam);
+	const glitchPass = new GlitchPass(32);
+	glitchPass.renderToScreen = true;
+	composer.addPass(renderPass);
+	composer.addPass(glitchPass);
 
     //Control
     const controls = new OrbitControls(orbit_cam, renderer.domElement);
@@ -237,7 +247,7 @@ function init() {
 
         meshSphere.rotation.y += 0.01;
 
-        renderer.render(scene, orbit_cam);
+        composer.render();
         requestAnimationFrame(tick);
     }
 
