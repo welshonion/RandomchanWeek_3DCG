@@ -11,6 +11,8 @@ import { EffectComposer } from "./libs/examples/jsm/postprocessing/EffectCompose
 import { RenderPass } from "./libs/examples/jsm/postprocessing/RenderPass.js";
 import { BloomPass } from "./libs/examples/jsm/postprocessing/BloomPass.js";
 import { GlitchPass } from "./libs/examples/jsm/postprocessing/GlitchPass.js";
+import { CopyShader } from "./libs/examples/jsm/shaders/CopyShader.js";
+import { ShaderPass } from "./libs/examples/jsm/postprocessing/ShaderPass.js";
 
 // watayo
 import { metaball } from "./Utils/objects/metaball.js";
@@ -49,15 +51,18 @@ function init() {
     });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
+
+	//PostProcess
 	const composer = new EffectComposer(renderer);
 	const renderPass = new RenderPass(scene, orbit_cam);
+	const bloomPass = new BloomPass(1.4, 20, 0.5, 512);
 	const glitchPass = new GlitchPass(32);
-//	const bloomPass = new BloomPass(4.0, 25, 1.0, 512);
-	glitchPass.renderToScreen = true;
-//	BloomPass.renderToScreen = true;
+	const shaderPass = new ShaderPass(CopyShader);
+	shaderPass.renderToScreen = true;
 	composer.addPass(renderPass);
+	composer.addPass(bloomPass);
 	composer.addPass(glitchPass);
-//	composer.addPass(bloomPass);
+	composer.addPass(shaderPass);
 
     //Control
     const controls = new OrbitControls(orbit_cam, renderer.domElement);
@@ -105,10 +110,10 @@ function init() {
 
 
     //Light
-    const directionalLight1 = new THREE.DirectionalLight(0xFFFFFF, 0.9);
+    const directionalLight1 = new THREE.DirectionalLight(0xFFFFFF, 0.6);
     directionalLight1.position.set(1, 1, -4);
     scene.add(directionalLight1);
-    const directionalLight2 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+    const directionalLight2 = new THREE.DirectionalLight(0xFFFFFF, 0.2);
     directionalLight2.position.set(2, 1, 3);
     scene.add(directionalLight2);
 
