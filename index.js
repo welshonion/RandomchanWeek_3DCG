@@ -9,7 +9,7 @@ import { importFBX } from "./Utils/objects/model_import.js";
 import { tweet_panel } from "./Utils/tweet/tweet_panel.js";
 import { EffectComposer } from "./libs/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "./libs/examples/jsm/postprocessing/RenderPass.js";
-import { FilmPass } from "./libs/examples/jsm/postprocessing/FilmPass.js";
+import { BloomPass } from "./libs/examples/jsm/postprocessing/BloomPass.js";
 import { GlitchPass } from "./libs/examples/jsm/postprocessing/GlitchPass.js";
 
 // watayo
@@ -52,9 +52,12 @@ function init() {
 	const composer = new EffectComposer(renderer);
 	const renderPass = new RenderPass(scene, orbit_cam);
 	const glitchPass = new GlitchPass(32);
+//	const bloomPass = new BloomPass(4.0, 25, 1.0, 512);
 	glitchPass.renderToScreen = true;
+//	BloomPass.renderToScreen = true;
 	composer.addPass(renderPass);
 	composer.addPass(glitchPass);
+//	composer.addPass(bloomPass);
 
     //Control
     const controls = new OrbitControls(orbit_cam, renderer.domElement);
