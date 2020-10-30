@@ -17,12 +17,13 @@ const width_per_tweet = 512;
 const height_per_tweet = 134;
 const font_step = 66;//この文字数以上のツイートは小さく表示
 
-export function tweet_panel(scale){
+export function tweet_panel(json, scale){
 	//// tweetをyoutube live 風に表示するパネル
 	const max_per_line = [24, 35];
 
 	const canvas = document.createElement('canvas');
-	let tweets = tweet;
+//	let tweets = JSON.parse(json);
+	let tweets = json;
 
 	/* canvas描画*/
 	const twesize = tweets.length;

@@ -55,12 +55,12 @@ function init() {
 	//PostProcess
 	const composer = new EffectComposer(renderer);
 	const renderPass = new RenderPass(scene, orbit_cam);
-	const bloomPass = new BloomPass(1.4, 20, 0.5, 512);
+//	const bloomPass = new BloomPass(1.4, 20, 0.5, 512);
 	const glitchPass = new GlitchPass(32);
 	const shaderPass = new ShaderPass(CopyShader);
 	shaderPass.renderToScreen = true;
 	composer.addPass(renderPass);
-	composer.addPass(bloomPass);
+//	composer.addPass(bloomPass);
 	composer.addPass(glitchPass);
 	composer.addPass(shaderPass);
 
@@ -110,10 +110,10 @@ function init() {
 
 
     //Light
-    const directionalLight1 = new THREE.DirectionalLight(0xFFFFFF, 0.6);
+    const directionalLight1 = new THREE.DirectionalLight(0xFFFFFF, 0.9);
     directionalLight1.position.set(1, 1, -4);
     scene.add(directionalLight1);
-    const directionalLight2 = new THREE.DirectionalLight(0xFFFFFF, 0.2);
+    const directionalLight2 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
     directionalLight2.position.set(2, 1, 3);
     scene.add(directionalLight2);
 
@@ -298,13 +298,15 @@ function init() {
 	const PCobj = importFBX(PC, new THREE.Vector3(61.0, 16.0, 140.0), new THREE.Vector3(0.0, 70.0, 20.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.7, scene);
 
 	//// ツイート表示
-	function add_tweet(){
-		const twe_panel = tweet_panel(0.1);
-		twe_panel.position.set(70.0, 28, -50.0);
-		twe_panel.lookAt(0.0, twe_panel.position.y, 0.0);
-		scene.add(twe_panel);
-	}
-    add_tweet();
+	$(function(){
+		$.getJSON("Utils/Tweet/tweet.json")
+			.done(function(json){
+				const twe_panel = tweet_panel(json, 0.1);
+				twe_panel.position.set(70.0, 28, -50.0);
+				twe_panel.lookAt(0.0, twe_panel.position.y, 0.0);
+				scene.add(twe_panel);
+			});
+	});
     
     // watayo
     let time = new THREE.Clock().elapsedTime;
