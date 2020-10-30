@@ -1,5 +1,4 @@
 import { ShaderMaterial } from '../../libs/src/materials/shadermaterial.js';
-import { tweet } from './tweet.js';
 /*
 const testdata = [
 	{"name":"これは65字です", "tweet":"あああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ"},
@@ -22,7 +21,6 @@ export function tweet_panel(json, scale){
 	const max_per_line = [24, 35];
 
 	const canvas = document.createElement('canvas');
-//	let tweets = JSON.parse(json);
 	let tweets = json;
 
 	/* canvas描画*/
@@ -33,11 +31,18 @@ export function tweet_panel(json, scale){
 		num_lines += twelines[i];
 	}
 	canvas.width = width_per_tweet;
-	canvas.height = height_per_tweet * twesize + num_lines;
+	canvas.height = height_per_tweet * twesize;
 	const ctx = canvas.getContext('2d');
 	//// 背景
 	ctx.fillStyle = "rgb(235, 235, 255)";
 	ctx.fillRect(0,0,canvas.width, canvas.height);
+
+	ctx.fillStyle = "rgb(0, 0, 0)";
+	ctx.beginPath();
+	ctx.moveTo(0, 0.1);
+	ctx.lineTo(width_per_tweet, 0.1);
+	ctx.closePath();
+	ctx.stroke();
 
 	for(let i = 0;i < twesize;i++){
 		//// アカウント名
