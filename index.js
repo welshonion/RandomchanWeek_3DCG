@@ -16,6 +16,7 @@ import { ShaderPass } from "./libs/examples/jsm/postprocessing/ShaderPass.js";
 
 // watayo
 import { metaball } from "./Utils/objects/metaball.js";
+import Trails from "./Utils/objects/Trails.js"
 
 window.addEventListener('load', init);
 
@@ -52,17 +53,17 @@ function init() {
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
 
-	//PostProcess
-	const composer = new EffectComposer(renderer);
-	const renderPass = new RenderPass(scene, orbit_cam);
-//	const bloomPass = new BloomPass(1.4, 20, 0.5, 512);
-	const glitchPass = new GlitchPass(32);
-	const shaderPass = new ShaderPass(CopyShader);
-	shaderPass.renderToScreen = true;
-	composer.addPass(renderPass);
-//	composer.addPass(bloomPass);
-	composer.addPass(glitchPass);
-	composer.addPass(shaderPass);
+    //PostProcess
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, orbit_cam);
+    //	const bloomPass = new BloomPass(1.4, 20, 0.5, 512);
+    const glitchPass = new GlitchPass(32);
+    const shaderPass = new ShaderPass(CopyShader);
+    shaderPass.renderToScreen = true;
+    composer.addPass(renderPass);
+    //	composer.addPass(bloomPass);
+    composer.addPass(glitchPass);
+    composer.addPass(shaderPass);
 
     //Control
     const controls = new OrbitControls(orbit_cam, renderer.domElement);
@@ -117,11 +118,19 @@ function init() {
     directionalLight2.position.set(2, 1, 3);
     scene.add(directionalLight2);
 
-	/*
+    /*
     const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.1);
     scene.add(ambientLight);
-	*/
+    */
 
+    const axes = new THREE.AxesHelper(40);
+    axes.position.set(0, 0, 0);
+    scene.add(axes);
+
+    // trail num, trail length
+    let trail = new Trails(renderer, 2000, 70);
+
+    scene.add(trail.obj);
 
     document.addEventListener('moucemove', event => {
         mouseX = event.pageX;
@@ -140,7 +149,7 @@ function init() {
         fbxLoader.load(
             stagePath,
             function (object) {
-				object.scale.set(0.08, 0.08, 0.08);
+                object.scale.set(0.08, 0.08, 0.08);
                 scene.add(object);
             },
             onProgress,
@@ -247,6 +256,7 @@ function init() {
         //sound.unpause();
     }
 
+
     function tick() {
         if (pauseBool == false) {
             mmdHelper.update(clock.getDelta());
@@ -255,6 +265,7 @@ function init() {
 
         meshSphere.rotation.y += 0.01;
 
+        trail.update();
         composer.render();
         requestAnimationFrame(tick);
     }
@@ -279,37 +290,39 @@ function init() {
     };
 
 
-	// atsu
-	//// バックスクリーン
-	function add_screen(){
-		const screen = backscreen(920, 540, 0.11, scene, camera);
-		screen.position.set(0.0, 28, -100.0);
-		screen.lookAt(0.0, screen.position.y, 0.0);
-		scene.add(screen);
-	}
+    // atsu
+    //// バックスクリーン
+    function add_screen() {
+        const screen = backscreen(920, 540, 0.11, scene, camera);
+        screen.position.set(0.0, 28, -100.0);
+        screen.lookAt(0.0, screen.position.y, 0.0);
+        scene.add(screen);
+    }
     add_screen();
 
-	//// オブジェクト
-	const crt = "./atsu_samples/models/Parts/brawn_kan.fbx";
-	const display = "./atsu_samples/models/Parts/display.fbx";
-	const PC = "./atsu_samples/models/Parts/PC_1.fbx";
-	const crtobj = importFBX(crt, new THREE.Vector3(130.0, -4.0, 50.0), new THREE.Vector3(0.0, 40.0, 270.0), new THREE.Vector3(0.05, 0.05, 0.05), 2.2, scene);
-	const displayobj = importFBX(display, new THREE.Vector3(0.0, 70.0, 132.0), new THREE.Vector3(20.0, 0.0, 0.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.2, scene);
-	const PCobj = importFBX(PC, new THREE.Vector3(61.0, 16.0, 140.0), new THREE.Vector3(0.0, 70.0, 20.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.7, scene);
+    //// オブジェクト
+    const crt = "./atsu_samples/models/Parts/brawn_kan.fbx";
+    const display = "./atsu_samples/models/Parts/display.fbx";
+    const PC = "./atsu_samples/models/Parts/PC_1.fbx";
+    const crtobj = importFBX(crt, new THREE.Vector3(130.0, -4.0, 50.0), new THREE.Vector3(0.0, 40.0, 270.0), new THREE.Vector3(0.05, 0.05, 0.05), 2.2, scene);
+    const displayobj = importFBX(display, new THREE.Vector3(0.0, 70.0, 132.0), new THREE.Vector3(20.0, 0.0, 0.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.2, scene);
+    const PCobj = importFBX(PC, new THREE.Vector3(61.0, 16.0, 140.0), new THREE.Vector3(0.0, 70.0, 20.0), new THREE.Vector3(0.05, 0.05, 0.05), 1.7, scene);
 
-	//// ツイート表示
-	$(function(){
-		$.getJSON("Utils/Tweet/tweet.json")
-			.done(function(json){
-				const twe_panel = tweet_panel(json, 0.1);
-				twe_panel.position.set(70.0, 28, -50.0);
-				twe_panel.lookAt(0.0, twe_panel.position.y, 0.0);
-				scene.add(twe_panel);
-			});
-	});
-    
+    //// ツイート表示
+    $(function () {
+        $.getJSON("Utils/Tweet/tweet.json")
+            .done(function (json) {
+                const twe_panel = tweet_panel(json, 0.1);
+                twe_panel.position.set(70.0, 28, -50.0);
+                twe_panel.lookAt(0.0, twe_panel.position.y, 0.0);
+                scene.add(twe_panel);
+            });
+    });
+
     // watayo
     let time = new THREE.Clock().elapsedTime;
     metaball(scene, camera, 0, 30, -30);
+
+
 
 }
