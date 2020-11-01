@@ -1,4 +1,4 @@
-import { ShaderMaterial } from '../../libs/src/materials/shadermaterial.js';
+import { ShaderMaterial } from '../../libs/src/materials/Shadermaterial.js';
 /*
 const testdata = [
 	{"name":"これは65字です", "tweet":"あああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ"},
