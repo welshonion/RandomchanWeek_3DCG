@@ -1,4 +1,4 @@
-import { ShaderMaterial } from '../../libs/src/materials/shadermaterial.js';
+import { ShaderMaterial } from '../../libs/src/materials/ShaderMaterial.js';
 
 export function backscreen(width, height, scale, scene, camera){
 	//// cameraからのレンダリング映像を映すスクリーンを返す
