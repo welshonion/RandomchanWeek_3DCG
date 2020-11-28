@@ -310,7 +310,7 @@ function init() {
 
     //// ツイート表示
     $(function () {
-        $.getJSON("Utils/Tweet/tweet.json")
+        $.getJSON("Utils/tweet/tweet.json")
             .done(function (json) {
                 const twe_panel = tweet_panel(json, 0.1);
                 twe_panel.position.set(70.0, 28, -50.0);
